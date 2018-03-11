@@ -1,26 +1,36 @@
 #pragma once
 #include <GL/glew.h>
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
+#include <string>
+#include <iostream>
 
 class Wall {
 private:
 	glm::vec3 position;
 	glm::vec3 scale;
 	static unsigned int vao, vbo;
+	static unsigned int t_wall, t_start, t_finish, t_floor;
 	static bool generated;
 
 	void generateModel();
+	void generateTextures();
 public:
-	Wall(glm::vec3 pos, glm::vec3 scale = {1.0f, 1.0f, 1.0f});
-	Wall(float x, float y, float z, float sx = 1.0f, float sy = 1.0f, float sz = 1.0f) : Wall(glm::vec3(x, y, z), glm::vec3(sx, sy, sz)) {}
+	enum Type {
+		WALL,
+		START,
+		FINISH,
+		FLOOR
+	} type;
+
+	Wall(glm::vec3 pos, glm::vec3 scale = {1.0f, 1.0f, 1.0f}, Type t = WALL);
 
 	static void render();
-	static void deleteModel();
-
-	inline static void bind() { glBindVertexArray(vao); }
+	static void cleanup();
+	static void bind();
 	inline static void unbind() { glBindVertexArray(0); }
+
 	inline const glm::vec3& getPosition() const { return position; }
 	inline const glm::vec3& getScale() const { return scale; }
 	const glm::mat4 getModelMatrix() const;

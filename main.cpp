@@ -37,11 +37,9 @@ int main() {
 	glEnable(GL_CULL_FACE);
 	glClearColor(0.1, 0.3, 0.8, 1.0);
 
-	std::vector<Wall> walls;
-
 	int test[] = {
-		0,0,0,0,1, 0,1,1,1,0, 0,0,0,1,0,
-		1,1,1,1,1, 0,0,0,0,1, 1,1,1,0,1,
+		0,0,0,0,1, 1,1,1,1,0, 0,0,0,1,0,
+		1,1,1,1,1, 3,0,0,0,1, 1,1,1,0,1,
 		1,0,0,0,1, 1,1,1,0,1, 0,0,0,0,1,
 		1,0,1,0,1, 1,1,0,0,1, 0,1,1,1,1,
 		1,0,1,0,0, 0,1,0,1,1, 0,0,0,0,1,
@@ -50,14 +48,14 @@ int main() {
 		1,0,0,0,0, 0,1,0,1,0, 0,0,1,0,1,
 		1,1,1,0,1, 0,1,0,1,0, 1,0,1,0,1,
 		1,0,0,0,1, 0,0,0,0,0, 1,0,0,0,1,
-		1,0,1,1,1, 1,1,1,1,1, 1,1,1,1,1
+		1,2,1,1,1, 1,1,1,1,1, 1,1,1,1,1
 	};
+
+	Level2D::makeFromArray(test, 15, 10);
+	std::vector<Wall> walls = Level2D::getWalls();
 
 	Shader wallShader("wallShader.vert", "wallShader.frag");
 	Player player(glm::vec3(0.5f, 0.0f, 0.0f), walls);
-
-	Level2D::makeFromArray(test, 15, 10);
-	walls = Level2D::getWalls();
 
 	wallShader.use();
 	wallShader.setMat4("proj", glm::perspective(45.0f, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.01f, 500.0f));
@@ -74,6 +72,7 @@ int main() {
 
 		for (int i = 0; i < walls.size(); i++) {
 			wallShader.setMat4("model", walls[i].getModelMatrix());
+			wallShader.setInt("tex", walls[i].type);
 			Wall::render();
 		}
 
@@ -81,7 +80,7 @@ int main() {
 		glfwPollEvents();
 	}
 
-	Wall::deleteModel();
+	Wall::cleanup();
 	glfwTerminate();
 	return 0;
 }

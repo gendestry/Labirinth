@@ -22,8 +22,8 @@ void Player::move(GLFWwindow* window) {
 	glfwGetCursorPos(window, &newX, &newY);
 
 	// Speed related stuff
-	float movementSpeed = 2.0f * timeDiff;
-	float lookSpeed = 10.0f * timeDiff;
+	float movementSpeed = 1.5f * timeDiff;
+	float lookSpeed = 8.0f * timeDiff;
 	float jumpSpeed = 8.0f * timeDiff;
 
 	// Keyboard Code - Position
@@ -85,7 +85,7 @@ void Player::collision(glm::vec3 &trans) {
 		wallPos *= scale; // get them to player space
 
 		if (wallPos.x - offset < position.x + trans.x && position.x + trans.x < wallPos.x + offset &&
-			wallPos.z - offset < position.z + trans.z && position.z + trans.z < wallPos.z + offset && wallPos.y == position.y) {
+			wallPos.z - offset < position.z + trans.z && position.z + trans.z < wallPos.z + offset && position.y == wallPos.y) {
 			float xd = (position.x + trans.x) - (wallPos.x - offset);
 			if(xd > offset)
 				xd = (position.x + trans.x) - (wallPos.x + offset);
@@ -98,6 +98,14 @@ void Player::collision(glm::vec3 &trans) {
 				trans.x -= xd;
 			else
 				trans.z -= zd;
+		}
+
+		if (wallPos.x - offset < position.x + trans.x && position.x + trans.x < wallPos.x + offset &&
+			wallPos.z - offset < position.z + trans.z && position.z + trans.z < wallPos.z + offset && position.y - scale == wallPos.y) { // if it is under you
+			if(walls[i].type == Wall::FINISH) { 
+				std::cout << "You've won\n";
+				trans.y += 5.0f;
+			}
 		}
 	}
 }
