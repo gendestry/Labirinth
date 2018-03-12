@@ -1,11 +1,9 @@
 #include "Player.h"
 
-Player::Player(glm::vec3 pos, const std::vector<Wall> &w) : position(pos), rotation(glm::vec3(0.0f)), velocity(glm::vec3(0.0f)), view(glm::mat4()), falling(true), walls(w) {}
+Player::Player(glm::vec3 pos, const std::vector<Wall> &w) : position(pos), rotation(glm::vec3(0.0f)), velocity(glm::vec3(0.0f)), view(glm::mat4()), falling(false), walls(w) {}
 
 void Player::update(GLFWwindow* window) {
 	move(window);
-	updatePosition();
-	velocity = glm::vec3(0.0f);
 }
 
 void Player::move(GLFWwindow* window) {
@@ -23,8 +21,8 @@ void Player::move(GLFWwindow* window) {
 
 	// Speed related stuff
 	float movementSpeed = 1.5f * timeDiff;
-	float lookSpeed = 8.0f * timeDiff;
-	float jumpSpeed = 8.0f * timeDiff;
+	float lookSpeed = 9.0f * timeDiff;
+	float fallSpeed = -8.0f * timeDiff;
 
 	// Keyboard Code - Position
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -43,21 +41,14 @@ void Player::move(GLFWwindow* window) {
 	/* TEMPORARY CHEAT FUNCTION */
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
 		if(position.y < 5.0f)
-			velocity.y += 5.0f;
+			position.y += 5.0f;
 	}
 	else if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
 		if(position.y > 0.0f)
-			velocity.y -= 5.0f;
+			position.y -= 5.0f;
 	}
 
-	/*if (!falling) {
-		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-
-		}
-	}
-	else {
-
-	}*/
+	updatePosition(); // update the actual position :v)
 
 	// Mouse Code - Rotation
 	if (first) {
@@ -77,14 +68,14 @@ void Player::move(GLFWwindow* window) {
 
 void Player::collision(glm::vec3 &trans) {
 	float scale =0.5f;
-	float offset = (scale * 13) / 20;
+	float offset = (scale * 12) / 20.0f;
 	glm::vec3 newPos = position + trans;
 
 	for (int i = 0; i < walls.size(); i++) {
 		glm::vec3 wallPos = walls[i].getPosition();
 		wallPos *= scale; // get them to player space
 
-		if (wallPos.x - offset < position.x + trans.x && position.x + trans.x < wallPos.x + offset &&
+		/*if (wallPos.x - offset < position.x + trans.x && position.x + trans.x < wallPos.x + offset &&
 			wallPos.z - offset < position.z + trans.z && position.z + trans.z < wallPos.z + offset && position.y == wallPos.y) {
 			float xd = (position.x + trans.x) - (wallPos.x - offset);
 			if(xd > offset)
@@ -98,7 +89,7 @@ void Player::collision(glm::vec3 &trans) {
 				trans.x -= xd;
 			else
 				trans.z -= zd;
-		}
+		}*/
 
 		if (wallPos.x - offset < position.x + trans.x && position.x + trans.x < wallPos.x + offset &&
 			wallPos.z - offset < position.z + trans.z && position.z + trans.z < wallPos.z + offset && position.y - scale == wallPos.y) { // if it is under you
@@ -107,16 +98,34 @@ void Player::collision(glm::vec3 &trans) {
 				trans.y += 5.0f;
 			}
 		}
+
+		if (wallPos.x - offset < position.x + trans.x && position.x + trans.x < wallPos.x + offset &&
+			wallPos.z - offset < position.z + trans.z && position.z + trans.z < wallPos.z + offset &&
+			wallPos.y - scale < position.y + trans.y && position.y + trans.y < wallPos.y + scale) {
+				float xd = (position.x + trans.x) - (wallPos.x - offset);
+				if (xd > offset)
+					xd = (position.x + trans.x) - (wallPos.x + offset);
+
+				float zd = (position.z + trans.z) - (wallPos.z - offset);
+				if (zd > offset)
+					zd = (position.z + trans.z) - (wallPos.z + offset);
+
+				if (abs(xd) < abs(zd))
+					trans.x -= xd;
+				else
+					trans.z -= zd;
+		}
 	}
 }
 
 void Player::updatePosition() {
-	glm::vec3 temp, oldPos = position;
+	glm::vec3 temp;
 
 	temp.x = cos(glm::radians(rotation.y)) * velocity.x - sin(glm::radians(rotation.y)) * velocity.z;
 	temp.y = velocity.y;
 	temp.z = sin(glm::radians(rotation.y)) * velocity.x + cos(glm::radians(rotation.y)) * velocity.z;
 
+	velocity = glm::vec3(0.0f);
 	collision(temp);
 
 	position += temp;

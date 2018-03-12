@@ -37,28 +37,14 @@ int main() {
 	glEnable(GL_CULL_FACE);
 	glClearColor(0.1, 0.3, 0.8, 1.0);
 
-	int test[] = {
-		0,0,0,0,1, 1,1,1,1,0, 0,0,0,1,0,
-		1,1,1,1,1, 3,0,0,0,1, 1,1,1,0,1,
-		1,0,0,0,1, 1,1,1,0,1, 0,0,0,0,1,
-		1,0,1,0,1, 1,1,0,0,1, 0,1,1,1,1,
-		1,0,1,0,0, 0,1,0,1,1, 0,0,0,0,1,
-
-		1,0,1,1,1, 1,1,0,1,1, 1,1,1,0,1,
-		1,0,0,0,0, 0,1,0,1,0, 0,0,1,0,1,
-		1,1,1,0,1, 0,1,0,1,0, 1,0,1,0,1,
-		1,0,0,0,1, 0,0,0,0,0, 1,0,0,0,1,
-		1,2,1,1,1, 1,1,1,1,1, 1,1,1,1,1
-	};
-
-	Level2D::makeFromArray(test, 15, 10);
+	Level2D::loadFromFile("levels/level0.lvl");
 	std::vector<Wall> walls = Level2D::getWalls();
 
 	Shader wallShader("wallShader.vert", "wallShader.frag");
 	Player player(glm::vec3(0.5f, 0.0f, 0.0f), walls);
 
 	wallShader.use();
-	wallShader.setMat4("proj", glm::perspective(45.0f, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.01f, 500.0f));
+	wallShader.setMat4("proj", glm::perspective(45.0f, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.01f, 500.0f)); // 20.0f / 45.0f
 	wallShader.setMat4("view", player.getViewMatrix());
 	wallShader.setMat4("model", glm::mat4(1.0));
 
