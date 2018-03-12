@@ -4,6 +4,7 @@
 #include <fstream>
 
 std::vector<Wall> Level2D::walls;
+glm::vec3 Level2D::startPos;
 
 void Level2D::makeFromArray(int* arr, int width, int height) {
 	walls.clear();
@@ -11,8 +12,10 @@ void Level2D::makeFromArray(int* arr, int width, int height) {
 		for (int x = 0; x < width; x++) {
 			if (arr[x + z * width] == 1)
 				walls.emplace_back(glm::vec3(x, 0.0f, -height + z + 1), glm::vec3(0.5f), Wall::WALL);
-			else if (arr[x + z * width] == 2)
+			else if (arr[x + z * width] == 2) {
 				walls.emplace_back(glm::vec3(x, -1.0f, -height + z + 1), glm::vec3(0.5f), Wall::START);
+				startPos = glm::vec3(x, 0.0f, -height + z + 1);
+			}
 			else if (arr[x + z * width] == 3)
 				walls.emplace_back(glm::vec3(x, -1.0f, -height + z + 1), glm::vec3(0.5f), Wall::FINISH);
 			else
@@ -42,8 +45,10 @@ void Level2D::loadFromFile(const char* filePath) {
 			for (int x = 0; x < width; x++) {
 				if (data.at(x + z * width) == '#')
 					walls.emplace_back(glm::vec3(x, 0.0f, -height + z + 1), glm::vec3(0.5f), Wall::WALL);
-				else if (data.at(x + z * width) == 'S')
+				else if (data.at(x + z * width) == 'S') {
 					walls.emplace_back(glm::vec3(x, -1.0f, -height + z + 1), glm::vec3(0.5f), Wall::START);
+					startPos = glm::vec3(x, 0.0f, -height + z + 1);
+				}
 				else if (data.at(x + z * width) == 'F')
 					walls.emplace_back(glm::vec3(x, -1.0f, -height + z + 1), glm::vec3(0.5f), Wall::FINISH);
 				else

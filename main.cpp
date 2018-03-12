@@ -41,7 +41,9 @@ int main() {
 	std::vector<Wall> walls = Level2D::getWalls();
 
 	Shader wallShader("wallShader.vert", "wallShader.frag");
-	Player player(glm::vec3(0.5f, 0.0f, 0.0f), walls);
+	Player player(glm::vec3(Level2D::getStartPos().x / 2, Level2D::getStartPos().y / 2, Level2D::getStartPos().z / 2), walls);
+
+	//std::cout << Level2D::getStartPos();
 
 	wallShader.use();
 	wallShader.setMat4("proj", glm::perspective(45.0f, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.01f, 500.0f)); // 20.0f / 45.0f
