@@ -2,14 +2,13 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-
-#include <string>
-#include <iostream>
+#include <btBulletDynamicsCommon.h>
 
 class Wall {
 private:
 	glm::vec3 position;
-	glm::vec3 scale;
+	float scale;
+
 	static unsigned int vao, vbo;
 	static unsigned int t_wall, t_start, t_finish, t_floor;
 	static bool generated;
@@ -17,6 +16,8 @@ private:
 	void generateModel();
 	void generateTextures();
 public:
+	btRigidBody* body;
+	
 	enum Type {
 		WALL,
 		START,
@@ -24,7 +25,7 @@ public:
 		FLOOR
 	} type;
 
-	Wall(glm::vec3 pos, glm::vec3 scale = {1.0f, 1.0f, 1.0f}, Type t = WALL);
+	Wall(glm::vec3 pos, float sc, Type t, btDiscreteDynamicsWorld* world);
 
 	static void render();
 	static void cleanup();
@@ -32,6 +33,6 @@ public:
 	inline static void unbind() { glBindVertexArray(0); }
 
 	inline const glm::vec3& getPosition() const { return position; }
-	inline const glm::vec3& getScale() const { return scale; }
-	const glm::mat4 getModelMatrix() const;
+	inline const float getScale() const { return scale; }
+	glm::mat4 getModelMatrix() const;
 };

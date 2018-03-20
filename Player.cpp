@@ -1,12 +1,23 @@
 #include "Player.h"
 
-Player::Player(glm::vec3 pos, const std::vector<Wall> &w) : position(pos), rotation(glm::vec3(0.0f)), velocity(glm::vec3(0.0f)), view(glm::mat4()), falling(false), walls(w) {}
+Player::Player(glm::vec3 pos, btDiscreteDynamicsWorld* world) : rotation(glm::vec3(0.0f)) {
+	float mass = 1.0f;
 
-void Player::update(GLFWwindow* window) {
-	move(window);
+	btTransform trans;
+	trans.setIdentity();
+	trans.setOrigin(btVector3(pos.x, pos.y, pos.z));
+	btBoxShape* shape = new btBoxShape(btVector3(0.05f, 0.25f, 0.05f));
+	btMotionState* motion = new btDefaultMotionState(trans);
+	btVector3 inertia(0, 0, 0); shape->calculateLocalInertia(mass, inertia);
+	btRigidBody::btRigidBodyConstructionInfo info(mass, motion, shape, inertia);
+	body = new btRigidBody(info);
+	body->setAngularFactor(btVector3(0, 0, 0));
+	body->setSleepingThresholds(0, 1);
+	body->setRestitution(0.0f);
+	world->addRigidBody(body);
 }
 
-void Player::move(GLFWwindow* window) {
+void Player::update(GLFWwindow* window) {
 	// Time variables
 	static float oldTime = 0.0f;
 	float time = glfwGetTime();
@@ -14,139 +25,84 @@ void Player::move(GLFWwindow* window) {
 	oldTime = glfwGetTime();
 
 	// Mouse variables
-	static double oldX, oldY;
-	static bool first = true;
 	double newX, newY;
 	glfwGetCursorPos(window, &newX, &newY);
+	static double oldX = newX, oldY = newY;
 
 	// Speed related stuff
-	float movementSpeed = 1.5f * timeDiff;
-	float lookSpeed = 9.0f * timeDiff;
-	float fallSpeed = -8.0f * timeDiff;
+	float moveSpeed = timeDiff * 100.0f * 1.3f;
+	float jumpSpeed = timeDiff * 100.0f * 5.0f;
+	float lookSpeed = timeDiff * 10.0f;
+
+	glm::vec3 velocity(0.0f);
 
 	// Keyboard Code - Position
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
 
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		velocity.x -= movementSpeed;
+		velocity.x -= moveSpeed;
 	else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		velocity.x += movementSpeed;
+		velocity.x += moveSpeed;
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		velocity.z -= movementSpeed;
+		velocity.z -= moveSpeed;
 	else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		velocity.z += movementSpeed;
+		velocity.z += moveSpeed;
 
-	/* TEMPORARY CHEAT FUNCTION */
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-		if(position.y < 5.0f)
-			position.y += 5.0f;
-	}
-	else if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
-		if(position.y > 0.0f)
-			position.y -= 5.0f;
-	}
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		velocity.y += jumpSpeed;
 
-	updatePosition(); // update the actual position :v)
 
 	// Mouse Code - Rotation
-	if (first) {
-		oldX = newX;
-		oldY = newY;
-		first = false;
-	}
-	else {
-		double dx = newX - oldX;
-		double dy = newY - oldY;
-		oldX = newX;
-		oldY = newY;
-		updateRotation({ dy * lookSpeed, 0.0f, 0.0f });
-		updateRotation({ 0.0f, dx * lookSpeed, 0.0f });
-	}
+	double dx = newX - oldX;
+	double dy = newY - oldY;
+	oldX = newX;
+	oldY = newY;
+	rotate({ dy * lookSpeed, 0.0f, 0.0f });
+	rotate({ 0.0f, dx * lookSpeed, 0.0f });
+
+	move(velocity); // update the actual position :v)
 }
 
-void Player::collision(glm::vec3 &trans) {
-	float scale =0.5f;
-	float offset = (scale * 12) / 20.0f;
-	glm::vec3 newPos = position + trans;
+void Player::move(glm::vec3 pos) {
+	glm::vec3 temp(0.0f);
+	temp.x = cos(glm::radians(rotation.y)) * pos.x - sin(glm::radians(rotation.y)) * pos.z;
+	temp.y = pos.y;
+	temp.z = sin(glm::radians(rotation.y)) * pos.x + cos(glm::radians(rotation.y)) * pos.z;
 
-	for (int i = 0; i < walls.size(); i++) {
-		glm::vec3 wallPos = walls[i].getPosition();
-		wallPos *= scale; // get them to player space
-
-		/*if (wallPos.x - offset < position.x + trans.x && position.x + trans.x < wallPos.x + offset &&
-			wallPos.z - offset < position.z + trans.z && position.z + trans.z < wallPos.z + offset && position.y == wallPos.y) {
-			float xd = (position.x + trans.x) - (wallPos.x - offset);
-			if(xd > offset)
-				xd = (position.x + trans.x) - (wallPos.x + offset);
-			
-			float zd = (position.z + trans.z) - (wallPos.z - offset);
-			if (zd > offset)
-				zd = (position.z + trans.z) - (wallPos.z + offset);
-
-			if (abs(xd) < abs(zd))
-				trans.x -= xd;
-			else
-				trans.z -= zd;
-		}*/
-
-		if (wallPos.x - offset < position.x + trans.x && position.x + trans.x < wallPos.x + offset &&
-			wallPos.z - offset < position.z + trans.z && position.z + trans.z < wallPos.z + offset && position.y - scale == wallPos.y) { // if it is under you
-			if(walls[i].type == Wall::FINISH) { 
-				std::cout << "You've won\n";
-				trans.y += 5.0f;
-			}
-		}
-
-		if (wallPos.x - offset < position.x + trans.x && position.x + trans.x < wallPos.x + offset &&
-			wallPos.z - offset < position.z + trans.z && position.z + trans.z < wallPos.z + offset &&
-			wallPos.y - scale < position.y + trans.y && position.y + trans.y < wallPos.y + scale) {
-				float xd = (position.x + trans.x) - (wallPos.x - offset);
-				if (xd > offset)
-					xd = (position.x + trans.x) - (wallPos.x + offset);
-
-				float zd = (position.z + trans.z) - (wallPos.z - offset);
-				if (zd > offset)
-					zd = (position.z + trans.z) - (wallPos.z + offset);
-
-				if (abs(xd) < abs(zd))
-					trans.x -= xd;
-				else
-					trans.z -= zd;
-		}
-	}
+	body->setLinearVelocity(btVector3(temp.x, body->getLinearVelocity().getY(), temp.z));
 }
 
-void Player::updatePosition() {
-	glm::vec3 temp;
-
-	temp.x = cos(glm::radians(rotation.y)) * velocity.x - sin(glm::radians(rotation.y)) * velocity.z;
-	temp.y = velocity.y;
-	temp.z = sin(glm::radians(rotation.y)) * velocity.x + cos(glm::radians(rotation.y)) * velocity.z;
-
-	velocity = glm::vec3(0.0f);
-	collision(temp);
-
-	position += temp;
-	updateMatrix();
-}
-
-void Player::updateRotation(glm::vec3 rot) {
+void Player::rotate(glm::vec3 rot) {
 	rotation += rot;
 	if (rotation.x > 90.0f) rotation.x = 90.0f;
 	if (rotation.x < -90.0f) rotation.x = -90.0f;
-	updateMatrix();
 }
 
-void Player::updateMatrix() {
-	view = glm::mat4(1.0f);
+// GETTERS 
+glm::mat4 Player::getViewMatrix() const {
+	glm::mat4 view(1.0f);
 	view = glm::rotate(view, glm::radians(rotation.x), { 1.0f, 0.0f, 0.0f }); // pitch
 	view = glm::rotate(view, glm::radians(rotation.y), { 0.0f, 1.0f, 0.0f }); // yaw
-	view = glm::translate(view, -position);
+	view = glm::translate(view, -getPosition());
+	return view;
 }
 
-std::ostream& operator<<(std::ostream& os, const glm::vec3& vec) {
-	os << vec.x << ", " << vec.y << ", " << vec.z<< "\n";
-	return os;
+glm::vec3 Player::getPosition() const {
+	btTransform trans; body->getMotionState()->getWorldTransform(trans);
+	return glm::vec3(trans.getOrigin().getX(), trans.getOrigin().getY(), trans.getOrigin().getZ());
+}
+
+glm::vec3 Player::getRotation() const {
+	return rotation;
+}
+
+glm::vec3 Player::getViewDir() const {
+	glm::vec3 viewDir;
+	viewDir.x = sin(glm::radians(rotation.y)) * cos(glm::radians(rotation.x));
+	viewDir.y = -sin(glm::radians(rotation.x));
+	viewDir.z = -cos(glm::radians(rotation.y)) * cos(glm::radians(rotation.x));
+
+	return viewDir;
 }

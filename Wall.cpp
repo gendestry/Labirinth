@@ -1,4 +1,6 @@
 #include "Wall.h"
+#include <string>
+#include <iostream>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -7,12 +9,21 @@ unsigned int Wall::vao, Wall::vbo;
 unsigned int Wall::t_wall, Wall::t_start, Wall::t_finish, Wall::t_floor;
 bool Wall::generated;
 
-Wall::Wall(glm::vec3 pos, glm::vec3 sc, Type t) : position(pos), scale(sc), type(t) {
+Wall::Wall(glm::vec3 pos, float sc, Type t, btDiscreteDynamicsWorld* world) : position(pos), scale(sc), type(t) {
 	if (!generated) {
 		generateModel();
 		generateTextures();
 		generated = true;
 	}
+
+	btTransform trans;
+	trans.setIdentity();
+	trans.setOrigin(btVector3(pos.x, pos.y, pos.z));
+	btBoxShape* box = new btBoxShape(btVector3(scale/2, scale/2, scale/2));
+	btMotionState* motion = new btDefaultMotionState(trans);
+	btRigidBody::btRigidBodyConstructionInfo info(0.0f, motion, box);
+	body = new btRigidBody(info);
+	world->addRigidBody(body);
 }
 
 void Wall::generateModel() {
@@ -187,9 +198,9 @@ void Wall::bind() {
 	glBindTexture(GL_TEXTURE_2D, t_floor);
 }
 
-const glm::mat4 Wall::getModelMatrix() const {
+glm::mat4 Wall::getModelMatrix() const {
 	glm::mat4 model(1.0f);
-	model = glm::scale(model, scale);
 	model = glm::translate(model, position);
+	model = glm::scale(model, {scale, scale, scale});
 	return model;
 }

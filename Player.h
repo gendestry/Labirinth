@@ -1,34 +1,24 @@
 #pragma once
-#include "Wall.h"
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <GLFW/glfw3.h>
-
-#include <vector>
-#include <iostream>
+#include <btBulletDynamicsCommon.h>
 
 class Player {
 private:
-	bool falling;
+	btRigidBody* body;
+	glm::vec3 rotation;
 
-	glm::vec3 position, rotation, velocity;
-	glm::mat4 view;
+	void move(glm::vec3 pos);
+	void rotate(glm::vec3 rot);
 
-	const std::vector<Wall> &walls;
-
-	void updatePosition();
-	void updateRotation(glm::vec3 rot);
-	void updateMatrix();
-	void collision(glm::vec3 &trans);
-
-	friend std::ostream& operator<<(std::ostream& os, const glm::vec3& vec);
 public:
-	Player(glm::vec3 pos, const std::vector<Wall> &walls);
+	Player(glm::vec3 pos, btDiscreteDynamicsWorld* wld);
 
 	void update(GLFWwindow* window);
-	void move(GLFWwindow* window);
 
-	inline glm::mat4 getViewMatrix() const { return view; }
-	inline glm::vec3 getPosition() const { return position; }
+	glm::mat4 getViewMatrix() const;
+	glm::vec3 getPosition() const;
+	glm::vec3 getRotation() const;
+	glm::vec3 getViewDir() const;
 };

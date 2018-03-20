@@ -5,6 +5,9 @@ in vec3 position;
 in vec3 normal;
 in vec2 texcoord;
 
+uniform vec3 viewPos;
+uniform vec3 fragPos;
+
 uniform sampler2D tex;
 
 void main() {
@@ -13,5 +16,8 @@ void main() {
 	vec3 lightDir = normalize(lightPos - position);
 	float diffk = max(dot(norm, lightDir), 0.15);
 
-	color =  diffk * texture(tex, texcoord);
+	//vec3 viewDir = normalize(fragPos - viewPos);
+	//float fresnel = 1 - min(pow(dot(normal, viewDir), 2), 0.9);
+
+	color =  /*fresnel * */diffk * texture(tex, texcoord);
 }
