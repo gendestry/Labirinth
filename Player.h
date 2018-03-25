@@ -11,7 +11,6 @@ private:
 
 	void move(glm::vec3 pos);
 	void rotate(glm::vec3 rot);
-
 public:
 	Player(glm::vec3 pos, btDiscreteDynamicsWorld* wld);
 

@@ -1,4 +1,19 @@
 #include "Player.h"
+#include "Wall.h"
+
+#include <iostream>
+
+bool callbackFunc(btManifoldPoint& cp, const btCollisionObjectWrapper* obj1, int id1, int index1, const btCollisionObjectWrapper* obj2, int id2, int index2) {
+	Wall* wall = (Wall*)obj1->getCollisionObject()->getUserPointer();
+	if (wall->type == Wall::FINISH) {
+		static bool first = true;
+		if (first) {
+			std::cout << "Level completed succesfully!\n";
+			first = false;
+		}
+	}
+	return false;
+}
 
 Player::Player(glm::vec3 pos, btDiscreteDynamicsWorld* world) : rotation(glm::vec3(0.0f)) {
 	float mass = 1.0f;
@@ -14,7 +29,9 @@ Player::Player(glm::vec3 pos, btDiscreteDynamicsWorld* world) : rotation(glm::ve
 	body->setAngularFactor(btVector3(0, 0, 0));
 	body->setSleepingThresholds(0, 1);
 	body->setRestitution(0.0f);
+	body->setCollisionFlags(body->getCollisionFlags() | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
 	world->addRigidBody(body);
+	gContactAddedCallback = callbackFunc;
 }
 
 void Player::update(GLFWwindow* window) {

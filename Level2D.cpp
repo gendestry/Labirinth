@@ -55,6 +55,9 @@ void Level2D::loadFromFile(const char* filePath, btDiscreteDynamicsWorld* world)
 					walls.emplace_back(glm::vec3(x, -0.5f, -height / 2.0f + z + 0.5f), 0.5f, Wall::FLOOR, world);
 			}
 		}
+
+		for (int i = 0; i < walls.size(); i++)
+			walls[i].body->setUserPointer(&walls[i]);
 	}
 	else
 		std::cout << "Couldn't open the file: " << filePath << "!\n";

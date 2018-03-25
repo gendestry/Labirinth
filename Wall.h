@@ -1,5 +1,5 @@
 #pragma once
-#include <GL/glew.h>
+#include <iostream>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <btBulletDynamicsCommon.h>
@@ -30,7 +30,7 @@ public:
 	static void render();
 	static void cleanup();
 	static void bind();
-	inline static void unbind() { glBindVertexArray(0); }
+	static void unbind();
 
 	inline const glm::vec3& getPosition() const { return position; }
 	inline const float getScale() const { return scale; }

@@ -1,6 +1,7 @@
 #include "Wall.h"
 #include <string>
 #include <iostream>
+#include <GL/glew.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -24,6 +25,7 @@ Wall::Wall(glm::vec3 pos, float sc, Type t, btDiscreteDynamicsWorld* world) : po
 	btRigidBody::btRigidBodyConstructionInfo info(0.0f, motion, box);
 	body = new btRigidBody(info);
 	world->addRigidBody(body);
+	// WHY TF DOES IT GET COPIED
 }
 
 void Wall::generateModel() {
@@ -196,6 +198,10 @@ void Wall::bind() {
 	glBindTexture(GL_TEXTURE_2D, t_finish);
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, t_floor);
+}
+
+void Wall::unbind() {
+	glBindVertexArray(0);
 }
 
 glm::mat4 Wall::getModelMatrix() const {
