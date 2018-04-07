@@ -10,6 +10,8 @@
 #include "Wall.h"
 #include "Player.h"
 #include "Level2D.h"
+#include "Level3D.h"
+#include "Cubemap.h"
 
 void init();
 void cleanup();
@@ -18,6 +20,8 @@ const int SCR_WIDTH = 800, SCR_HEIGHT = 600;
 
 GLFWwindow* window;
 
+// TODO: make this code compatible with runtime error throwing
+// TODO: maybe smartpointers dont be lazy >:(
 btDiscreteDynamicsWorld* world;
 btDefaultCollisionConfiguration* conf;
 btCollisionDispatcher* disp;
@@ -27,31 +31,50 @@ btSequentialImpulseConstraintSolver* solv;
 int main() {
 	init();
 
-	Level2D::loadFromFile("levels/level0.lvl", world);
-	std::vector<Wall> walls = Level2D::getWalls();
+	std::vector<Wall> walls;
+	/*Level2D::loadFromFile("levels/level0.lvl", world);
+	walls = Level2D::getWalls();*/
+
+	Level3D::loadFromFile("levels/level3d.lvl", world);
+	walls = Level3D::getWalls();
 
 	Shader wallShader("wallShader.vert", "wallShader.frag");
-	Player player(Level2D::getStartPos(), world);
+	Shader skyboxShader("skybox.vert", "skybox.frag");
+	Player player(Level3D::getStartPos(), world);
+	Cubemap skybox({ "res/skybox/right.jpg","res/skybox/left.jpg","res/skybox/top.jpg","res/skybox/bottom.jpg","res/skybox/front.jpg","res/skybox/back.jpg" });
 
 	wallShader.use();
-	wallShader.setMat4("proj", glm::perspective(45.0f, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.01f, 500.0f)); // 20.0f / 45.0f
+	wallShader.setMat4("proj", glm::perspective(45.0f, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.01f, 500.0f));
 
-	Wall::bind();
+	skyboxShader.use();
+	skyboxShader.setMat4("proj", glm::perspective(45.0f, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.01f, 500.0f));
+
 
 	while (!glfwWindowShouldClose(window)) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		world->stepSimulation(1.f / 60.f);
 		player.update(window);
+
+		wallShader.use();
 		wallShader.setMat4("view", player.getViewMatrix());
 		wallShader.setVec3("viewPos", player.getPosition());
-
+		
+		Wall::bind();
 		for (int i = 0; i < walls.size(); i++) {
 			wallShader.setVec3("fragPos", walls[i].getPosition());
 			wallShader.setMat4("model", walls[i].getModelMatrix());
 			wallShader.setInt("tex", walls[i].type);
 			Wall::render();
 		}
+
+		skyboxShader.use();
+		skyboxShader.setMat4("view", glm::mat4(glm::mat3(player.getViewMatrix())));
+
+		glDepthFunc(GL_LEQUAL);
+		skybox.bind();
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glDepthFunc(GL_LESS);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

@@ -13,7 +13,8 @@ void Level2D::loadFromFile(const char* filePath, btDiscreteDynamicsWorld* world)
 
 	if (file.is_open()) {
 		std::string line, data;
-		int width(0), height(0);
+		bool setStartPos = false;
+		int width = 0, height = 0;
 
 		while (getline(file, line)) {
 			data += line;
@@ -24,30 +25,21 @@ void Level2D::loadFromFile(const char* filePath, btDiscreteDynamicsWorld* world)
 		walls.clear();
 		std::cout << "Loaded level: " << filePath << "\nWidth: " << width << ", height: " << height << "\n";
 
-		/*for (int z = 0; z < height; z++) {
-			for (int x = 0; x < width; x++) {
-				if (data.at(x + z * width) == '#')
-					walls.emplace_back(glm::vec3(x, 0.0f, -height + z + 1), 0.5f, Wall::WALL);
-				else if (data.at(x + z * width) == 'S') {
-					walls.emplace_back(glm::vec3(x, -1.0f, -height + z + 1), 0.5f, Wall::START);
-					startPos = glm::vec3(x, 0.0f, -height + z + 1);
-				}
-				else if (data.at(x + z * width) == 'F')
-					walls.emplace_back(glm::vec3(x, -1.0f, -height + z + 1), 0.5f, Wall::FINISH);
-				else
-					walls.emplace_back(glm::vec3(x, -1.0f, -height + z + 1), 0.5f, Wall::FLOOR);
-			}
-		}
-		*/
 		for (float z = 0; z < height / 2; z += 0.5f) {
 			for (float x = 0; x < width / 2; x += 0.5f) {
 				int index = (int)(x * 2 + z * 2 * width);
-
 				if (data.at(index) == '#')
 					walls.emplace_back(glm::vec3(x, 0.0f, -height / 2.0f + z + 0.5f), 0.5f, Wall::WALL, world);
 				else if (data.at(index) == 'S') {
-					walls.emplace_back(glm::vec3(x, -0.5f, -height / 2.0f + z + 0.5f), 0.5f, Wall::START, world);
-					startPos = glm::vec3(x, 0.5f, -height / 2.0f + z + 0.5f);
+					if (!setStartPos) {
+						walls.emplace_back(glm::vec3(x, -0.5f, -height / 2.0f + z + 0.5f), 0.5f, Wall::START, world);
+						startPos = glm::vec3(x, 0.1f, -height / 2.0f + z + 0.5f);
+						setStartPos = true;
+					}
+					else {
+						walls.emplace_back(glm::vec3(x, -0.5f, -height / 2.0f + z + 0.5f), 0.5f, Wall::FLOOR, world);
+						std::cout << "More than one starting position detected!\n";
+					}
 				}
 				else if (data.at(index) == 'F')
 					walls.emplace_back(glm::vec3(x, -0.5f, -height / 2.0f + z + 0.5f), 0.5f, Wall::FINISH, world);
@@ -58,6 +50,9 @@ void Level2D::loadFromFile(const char* filePath, btDiscreteDynamicsWorld* world)
 
 		for (int i = 0; i < walls.size(); i++)
 			walls[i].body->setUserPointer(&walls[i]);
+
+		if (!setStartPos)
+			startPos = glm::vec3(0, 5, 0);
 	}
 	else
 		std::cout << "Couldn't open the file: " << filePath << "!\n";

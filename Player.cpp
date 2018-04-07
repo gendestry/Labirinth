@@ -21,7 +21,8 @@ Player::Player(glm::vec3 pos, btDiscreteDynamicsWorld* world) : rotation(glm::ve
 	btTransform trans;
 	trans.setIdentity();
 	trans.setOrigin(btVector3(pos.x, pos.y, pos.z));
-	btBoxShape* shape = new btBoxShape(btVector3(0.05f, 0.25f, 0.05f));
+	btBoxShape* shape = new btBoxShape(btVector3(0.05f, 0.245f, 0.05f));
+	// btCapsuleShape* shape = new btCapsuleShape(0.05f, 0.40f);
 	btMotionState* motion = new btDefaultMotionState(trans);
 	btVector3 inertia(0, 0, 0); shape->calculateLocalInertia(mass, inertia);
 	btRigidBody::btRigidBodyConstructionInfo info(mass, motion, shape, inertia);
@@ -29,7 +30,7 @@ Player::Player(glm::vec3 pos, btDiscreteDynamicsWorld* world) : rotation(glm::ve
 	body->setAngularFactor(btVector3(0, 0, 0));
 	body->setSleepingThresholds(0, 1);
 	body->setRestitution(0.0f);
-	body->setCollisionFlags(body->getCollisionFlags() | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
+	body->setCollisionFlags(body->getCollisionFlags() | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK | btCollisionObject::CF_CHARACTER_OBJECT);
 	world->addRigidBody(body);
 	gContactAddedCallback = callbackFunc;
 }
@@ -47,7 +48,7 @@ void Player::update(GLFWwindow* window) {
 	static double oldX = newX, oldY = newY;
 
 	// Speed related stuff
-	float moveSpeed = timeDiff * 100.0f * 1.3f;
+	float moveSpeed = timeDiff * 100.0f * 1.1f;
 	float jumpSpeed = timeDiff * 100.0f * 5.0f;
 	float lookSpeed = timeDiff * 10.0f;
 

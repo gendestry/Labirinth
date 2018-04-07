@@ -9,6 +9,8 @@ private:
 	btRigidBody* body;
 	glm::vec3 rotation;
 
+	bool falling;
+
 	void move(glm::vec3 pos);
 	void rotate(glm::vec3 rot);
 public:
