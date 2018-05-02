@@ -2,6 +2,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <btBulletDynamicsCommon.h>
+#include <iostream>
 
 class Wall {
 private:
@@ -10,7 +11,7 @@ private:
 
 	static unsigned int vao, vbo;
 	static unsigned int t_wall, t_start, t_finish, t_floor;
-	static bool generated;
+	static bool generated, cleaned;
 
 	void generateModel();
 	void generateTextures();
@@ -25,9 +26,9 @@ public:
 	} type;
 
 	Wall(glm::vec3 pos, float sc, Type t, btDiscreteDynamicsWorld* world);
+	~Wall();
 
 	static void render();
-	static void cleanup();
 	static void bind();
 	static void unbind();
 
@@ -35,3 +36,4 @@ public:
 	inline const float getScale() const { return scale; }
 	glm::mat4 getModelMatrix() const;
 };
+

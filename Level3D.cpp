@@ -11,78 +11,78 @@ void Level3D::loadFromFile(const char* filePath, btDiscreteDynamicsWorld* world)
 	file.open(filePath);
 
 	if (file.is_open()) {
-		struct Chunk {
+		struct Layer {
 			std::string data;
 			int width, height;
-
-			Chunk(std::string d, int w, int h) : data(d), width(w), height(h) {}
+			Layer(int w, int h, std::string d) : width(w), height(h), data(d) {}
 		};
-		
-		std::vector<Chunk> chunks;
+
+		std::vector<Layer> layers;
+		bool setStartPos = false;
 
 		{
 			std::string line, data;
-
-			int cwidth = 0, cheight = 0;
+			int width = 0, height = 0;
 
 			while (getline(file, line)) {
 				if (line.size() == 0) {
-					chunks.emplace_back(data, cwidth, cheight);
-					cwidth = 0;
-					cheight = 0;
+					layers.emplace_back(width, height, data);
+					width = 0;
+					height = 0;
 					data = "";
 				}
 				else {
 					data += line;
-					cwidth = line.size();
-					cheight++;
+					width = line.size();
+					height++;
 				}
 			}
 
-			chunks.emplace_back(data, cwidth, cheight);
+			layers.emplace_back(width, height, data);
 		}
+
 		walls.clear();
+		walls.reserve(layers[0].width * layers[0].height * layers.size());
 
-		// assuming all the chunks have the same widht / height
-		std::cout << "Loaded level: " << filePath << "\nX-size: " << chunks[0].width << ", Z-size: " << chunks[0].height << ", Height: " << chunks.size() << "\n";
+		std::cout << "Loaded level: " << filePath << "\n";
 
-		bool setStartPos = false;
-		for (int i = 0; i < chunks.size(); i++) {
-			float height = chunks[i].height;
-			float width =  chunks[i].width;
-			std::string data = chunks[i].data;
-			float y = float(chunks.size() - i) / 2.0f - 0.5f;
+		for (int k = layers.size() - 1; k >= 0; k--) {
+			int width = layers[k].width;
+			int height = layers[k].height;
+			std::string data = layers[k].data;
 
-			for (float z = 0; z < height / 2; z += 0.5f) {
-				for (float x = 0; x < width / 2; x += 0.5f) {
-					int index = (int)(x * 2 + z * 2 * width);
+			for (int j = height - 1; j >= 0; j--) {
+				for (int i = 0; i < width; i++) {
+					int index = i + (height - j - 1) * height;
+					float x =  i / 2.0f;
+					float z = -j / 2.0f;
+					float y =  (layers.size() - k) / 2.0f;
+
 					if (data.at(index) == '#')
-						walls.emplace_back(glm::vec3(x, y, -height / 2.0f + z + 0.5f), 0.5f, Wall::WALL, world);
+						walls.emplace_back(glm::vec3(x, y, z), 0.5f, Wall::WALL, world);
+					else if (data.at(index) == 'F')
+						walls.emplace_back(glm::vec3(x, y, z), 0.5f, Wall::FINISH, world);
+					else if(data.at(index) == 'T')
+						walls.emplace_back(glm::vec3(x, y, z), 0.5f, Wall::FLOOR, world);
 					else if (data.at(index) == 'S') {
 						if (!setStartPos) {
-							walls.emplace_back(glm::vec3(x, y, -height / 2.0f + z + 0.5f), 0.5f, Wall::START, world);
-							startPos = glm::vec3(x, y + 0.5f, -height / 2.0f + z + 0.5f);
+							walls.emplace_back(glm::vec3(x, y, z), 0.5f, Wall::START, world);
+							startPos = glm::vec3(x, y + 0.5f, z);
 							setStartPos = true;
 						}
 						else {
-							walls.emplace_back(glm::vec3(x, y, -height / 2.0f + z + 0.5f), 0.5f, Wall::WALL, world);
-							std::cout << "More than one starting position detected! \n";
+							walls.emplace_back(glm::vec3(x, y, z), 0.5f, Wall::FLOOR, world);
+							std::cout << "There are more than one start positions in the file!\nThis one will be ignored!\n";
 						}
-					}
-					else if (data.at(index) == 'F')
-						walls.emplace_back(glm::vec3(x, y, -height / 2.0f + z + 0.5f), 0.5f, Wall::FINISH, world);
-					else if (data.at(index) == 'T') {
-						walls.emplace_back(glm::vec3(x, y, -height / 2.0f + z + 0.5f), 0.5f, Wall::FLOOR, world);
 					}
 				}
 			}
 		}
-		
-		for (int i = 0; i < walls.size(); i++)
-			walls[i].body->setUserPointer(&walls[i]);
 
-		if(!setStartPos)
+		if (!setStartPos) {
+			std::cout << "No start position set, choosing default.\n";
 			startPos = glm::vec3(0, 5, 0);
+		}
 	}
 	else
 		std::cout << "Couldn't open the file: " << filePath << "!\n";

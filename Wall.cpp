@@ -8,7 +8,7 @@
 
 unsigned int Wall::vao, Wall::vbo;
 unsigned int Wall::t_wall, Wall::t_start, Wall::t_finish, Wall::t_floor;
-bool Wall::generated;
+bool Wall::generated, Wall::cleaned;
 
 Wall::Wall(glm::vec3 pos, float sc, Type t, btDiscreteDynamicsWorld* world) : position(pos), scale(sc), type(t) {
 	if (!generated) {
@@ -24,8 +24,22 @@ Wall::Wall(glm::vec3 pos, float sc, Type t, btDiscreteDynamicsWorld* world) : po
 	btMotionState* motion = new btDefaultMotionState(trans);
 	btRigidBody::btRigidBodyConstructionInfo info(0.0f, motion, box);
 	body = new btRigidBody(info);
+	body->setUserPointer(this);
 	world->addRigidBody(body);
-	// WHY TF DOES IT GET COPIED
+}
+
+Wall::~Wall() {
+	if (!cleaned) {
+		unbind();
+		glDeleteTextures(1, &t_wall);
+		glDeleteTextures(1, &t_start);
+		glDeleteTextures(1, &t_finish);
+		glDeleteTextures(1, &t_floor);
+
+		glDeleteBuffers(1, &vbo);
+		glDeleteVertexArrays(1, &vao);
+		cleaned = true;
+	}
 }
 
 void Wall::generateModel() {
@@ -175,16 +189,6 @@ void Wall::generateTextures() {
 
 void Wall::render() {
 	glDrawArrays(GL_TRIANGLES, 0, 36);
-}
-
-void Wall::cleanup() {
-	glDeleteTextures(1, &t_wall);
-	glDeleteTextures(1, &t_start);
-	glDeleteTextures(1, &t_finish);
-	glDeleteTextures(1, &t_floor);
-
-	glDeleteBuffers(1, &vbo);
-	glDeleteVertexArrays(1, &vao);
 }
 
 void Wall::bind() { 

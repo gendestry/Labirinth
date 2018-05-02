@@ -20,35 +20,38 @@ const int SCR_WIDTH = 800, SCR_HEIGHT = 600;
 
 GLFWwindow* window;
 
-// TODO: make this code compatible with runtime error throwing
-// TODO: maybe smartpointers dont be lazy >:(
 btDiscreteDynamicsWorld* world;
 btDefaultCollisionConfiguration* conf;
 btCollisionDispatcher* disp;
 btBroadphaseInterface* interf;
 btSequentialImpulseConstraintSolver* solv;
 
+#define L2D 0
+
 int main() {
 	init();
-
 	std::vector<Wall> walls;
-	/*Level2D::loadFromFile("levels/level0.lvl", world);
-	walls = Level2D::getWalls();*/
 
+#if L2D == 1
+	Level2D::loadFromFile("levels/level0.lvl", world);
+	walls = Level2D::getWalls();
+	Player player(Level2D::getStartPos(), world);
+#else
 	Level3D::loadFromFile("levels/level3d.lvl", world);
 	walls = Level3D::getWalls();
+	Player player(Level3D::getStartPos(), world);
+#endif
 
 	Shader wallShader("wallShader.vert", "wallShader.frag");
 	Shader skyboxShader("skybox.vert", "skybox.frag");
-	Player player(Level3D::getStartPos(), world);
 	Cubemap skybox({ "res/skybox/right.jpg","res/skybox/left.jpg","res/skybox/top.jpg","res/skybox/bottom.jpg","res/skybox/front.jpg","res/skybox/back.jpg" });
 
+	glm::mat4 proj = glm::perspective(45.0f, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.01f, 500.0f);
 	wallShader.use();
-	wallShader.setMat4("proj", glm::perspective(45.0f, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.01f, 500.0f));
+	wallShader.setMat4("proj", proj);
 
 	skyboxShader.use();
-	skyboxShader.setMat4("proj", glm::perspective(45.0f, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.01f, 500.0f));
-
+	skyboxShader.setMat4("proj", proj);
 
 	while (!glfwWindowShouldClose(window)) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -67,6 +70,7 @@ int main() {
 			wallShader.setInt("tex", walls[i].type);
 			Wall::render();
 		}
+		Wall::unbind;
 
 		skyboxShader.use();
 		skyboxShader.setMat4("view", glm::mat4(glm::mat3(player.getViewMatrix())));
@@ -80,14 +84,12 @@ int main() {
 		glfwPollEvents();
 	}
 
-	Wall::unbind();
-
 	cleanup();
 	return 0;
 }
 
 void init() {
-	/* WINDOW CODE */
+	/* WINDOW */
 	if (!glfwInit())
 		std::cout << "couldnt init glfw\n";
 
@@ -111,7 +113,6 @@ void init() {
 
 
 	/* BULLET PHYSICS */
-
 	conf = new btDefaultCollisionConfiguration();
 	disp = new btCollisionDispatcher(conf);
 	interf = new btDbvtBroadphase();
@@ -138,7 +139,6 @@ void cleanup() {
 	delete disp;
 	delete conf;
 
-	Wall::cleanup();
 	glfwDestroyWindow(window);
 	glfwTerminate();
 }

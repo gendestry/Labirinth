@@ -11,13 +11,12 @@ uniform vec3 fragPos;
 uniform sampler2D tex;
 
 void main() {
-	vec3 lightPos = vec3(1000.0, 1000.0, 500.0);
 	vec3 norm = normalize(normal);
-	vec3 lightDir = normalize(lightPos - position);
-	float diffk = max(dot(norm, lightDir), 0.15);
+    vec3 lightDir = normalize(vec3(0.5,1.0,0.2)); 
+    float diffk = max(dot(norm, lightDir), 0.15);
 
-	//vec3 viewDir = normalize(fragPos - viewPos);
-	//float fresnel = 1 - min(pow(dot(normal, viewDir), 2), 0.9);
+	vec3 viewDir = normalize(fragPos - viewPos);
+	float fresnel = 1;// - min(pow(dot(normal, viewDir), 1), 0.9);
 
-	color =  /*fresnel * */diffk * texture(tex, texcoord);
+	color =  fresnel * diffk * texture(tex, texcoord);
 }

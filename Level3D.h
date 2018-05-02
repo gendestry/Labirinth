@@ -9,8 +9,9 @@ private:
 	static std::vector<Wall> walls;
 	static glm::vec3 startPos;
 public:
+	// Width & height of every layer must be the same
 	static void loadFromFile(const char* filePath, btDiscreteDynamicsWorld* world);
-
 	static std::vector<Wall>& getWalls() { return walls; }
 	static glm::vec3 getStartPos() { return startPos; }
 };
+

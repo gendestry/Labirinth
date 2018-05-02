@@ -80,7 +80,7 @@ void Player::update(GLFWwindow* window) {
 	rotate({ dy * lookSpeed, 0.0f, 0.0f });
 	rotate({ 0.0f, dx * lookSpeed, 0.0f });
 
-	move(velocity); // update the actual position :v)
+	move(velocity); // update the actual position
 }
 
 void Player::move(glm::vec3 pos) {
